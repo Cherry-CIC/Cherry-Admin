@@ -2,6 +2,16 @@
 
 React + TypeScript operations console for Cherry.
 
+## Tech stack
+
+- React
+- TypeScript
+- Vite
+- TanStack Table
+- TanStack Query
+- Firebase Authentication
+- CSS for application styling
+
 ## Local development
 
 ```bash
