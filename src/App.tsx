@@ -37,7 +37,20 @@ const navItems = [
 export function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  useEffect(() => onAuthStateChanged(auth, (next) => { setUser(next); setLoading(false); }), []);
+  useEffect(() => onAuthStateChanged(auth, async (next) => {
+    if (next) {
+      const token = await next.getIdTokenResult();
+      if (token.claims.admin === true) {
+        setUser(next);
+      } else {
+        await signOut(auth);
+        setUser(null);
+      }
+    } else {
+      setUser(null);
+    }
+    setLoading(false);
+  }), []);
   if (loading) return <div className="loading-screen">Loading Cherry Admin</div>;
   return user ? <Dashboard user={user} /> : <Login />;
 }
@@ -49,9 +62,19 @@ function Login() {
   const [busy, setBusy] = useState(false);
   async function submit(event: FormEvent) {
     event.preventDefault(); setBusy(true); setError('');
-    try { await signInWithEmailAndPassword(auth, email, password); }
-    catch { setError('Sign-in failed. Check your credentials and admin access.'); }
-    finally { setBusy(false); }
+    try {
+      const credential = await signInWithEmailAndPassword(auth, email, password);
+      const token = await credential.user.getIdTokenResult();
+      if (token.claims.admin !== true) {
+        await signOut(auth);
+        setError('Access denied. This account does not have admin privileges.');
+        setBusy(false);
+      }
+    }
+    catch (err) {
+      setError('Sign-in failed. Check your credentials and admin access.');
+      setBusy(false);
+    }
   }
   return <main className="login-page"><div className="login-shell">
     <div className="brand-mark">C</div><span className="eyebrow">Operations console</span>
