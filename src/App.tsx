@@ -69,12 +69,13 @@ function Login() {
 function Dashboard({ user }: { user: User }) {
   const queryClient = useQueryClient();
   const [active, setActive] = useState('Overview');
+  const appEnvironment = import.meta.env.VITE_FIREBASE_PROJECT_ID === 'cherry-prod-d513e' ? 'Production' : 'Development';
   const orders = useQuery({ queryKey: ['admin-orders'], queryFn: getAdminOrders, enabled: active === 'Orders' });
   const users = useQuery({ queryKey: ['admin-users'], queryFn: getAdminUsers, enabled: active === 'Users' });
   const shipments = useQuery({ queryKey: ['admin-shipments'], queryFn: getAdminShipments, enabled: active === 'Shipments' || active === 'Overview' });
   return <div className="app-shell"><aside className="sidebar">
     <div className="sidebar-brand"><div className="brand-mark small">C</div><strong>cherry</strong><span>ADMIN</span></div>
-    <div className="workspace"><span className="workspace-dot" />Production <ChevronRight size={14} /></div>
+    <div className="workspace"><span className="workspace-dot" />{appEnvironment} <ChevronRight size={14} /></div>
     <nav>{navItems.map(({ label, icon: Icon, active: defaultActive }) => <button className={active === label || (defaultActive && active === 'Overview') ? 'nav-item active' : 'nav-item'} onClick={() => setActive(label)} key={label}><Icon size={18} />{label}</button>)}</nav>
     <div className="sidebar-footer"><button className="nav-item"><CircleHelp size={18} />Help</button><button className="nav-item" onClick={() => signOut(auth)}><LogOut size={18} />Sign out</button></div>
   </aside><main className="main-content">
