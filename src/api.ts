@@ -32,9 +32,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return payload.data as T;
 }
 
-export const getShippingEmailIssues = () =>
-  request<ShippingEmailIssue[]>('/admin/shipping-email-issues');
-
 export const resendSellerEmail = (orderId: string) =>
   request(`/admin/shipping-email-issues/${orderId}/resend`, { method: 'POST' });
 
