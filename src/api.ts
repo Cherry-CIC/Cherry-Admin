@@ -58,6 +58,19 @@ export interface AdminUser {
   createdAt: string | null;
 }
 
+export interface AdminProduct {
+  id: string;
+  name: string;
+  sellerId: string;
+  charityId: string;
+  price: number;
+  donation: number;
+  status: string;
+  moderationStatus: string | null;
+  hasSales: boolean;
+  updatedAt: string | null;
+}
+
 export interface AdminShipment {
   id: string;
   orderId: string;
@@ -71,4 +84,5 @@ export interface AdminShipment {
 
 export const getAdminOrders = () => request<AdminOrder[]>('/admin/orders');
 export const getAdminUsers = () => request<AdminUser[]>('/admin/users');
+export const getAdminProducts = () => request<AdminProduct[]>('/admin/products');
 export const getAdminShipments = () => request<AdminShipment[]>('/admin/shipments');

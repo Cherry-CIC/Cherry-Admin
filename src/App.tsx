@@ -25,7 +25,7 @@ import {
   X,
 } from 'lucide-react';
 import { auth } from './firebase';
-import { AdminOrder, AdminShipment, AdminUser, getAdminOrders, getAdminShipments, getAdminUsers, resendSellerEmail, ShippingEmailIssue } from './api';
+import { AdminOrder, AdminProduct, AdminShipment, AdminUser, getAdminOrders, getAdminProducts, getAdminShipments, getAdminUsers, resendSellerEmail, ShippingEmailIssue } from './api';
 
 const navItems = [
   { label: 'Overview', icon: LayoutDashboard, active: true },
@@ -70,8 +70,9 @@ function Dashboard({ user }: { user: User }) {
   const queryClient = useQueryClient();
   const [active, setActive] = useState('Overview');
   const appEnvironment = import.meta.env.VITE_FIREBASE_PROJECT_ID === 'cherry-prod-d513e' ? 'Production' : 'Development';
-  const orders = useQuery({ queryKey: ['admin-orders'], queryFn: getAdminOrders, enabled: active === 'Orders' });
-  const users = useQuery({ queryKey: ['admin-users'], queryFn: getAdminUsers, enabled: active === 'Users' });
+  const orders = useQuery({ queryKey: ['admin-orders'], queryFn: getAdminOrders, enabled: active === 'Orders' || active === 'Overview' });
+  const users = useQuery({ queryKey: ['admin-users'], queryFn: getAdminUsers, enabled: active === 'Users' || active === 'Overview' });
+  const products = useQuery({ queryKey: ['admin-products'], queryFn: getAdminProducts, enabled: active === 'Products' || active === 'Overview' });
   const shipments = useQuery({ queryKey: ['admin-shipments'], queryFn: getAdminShipments, enabled: active === 'Shipments' || active === 'Overview' });
   return <div className="app-shell"><aside className="sidebar">
     <div className="sidebar-brand"><div className="brand-mark small">C</div><strong>cherry</strong><span>ADMIN</span></div>
@@ -80,13 +81,29 @@ function Dashboard({ user }: { user: User }) {
     <div className="sidebar-footer"><button className="nav-item"><CircleHelp size={18} />Help</button><button className="nav-item" onClick={() => signOut(auth)}><LogOut size={18} />Sign out</button></div>
   </aside><main className="main-content">
     <header className="topbar"><div><span className="eyebrow">Operations</span><h2>{active}</h2></div><div className="user-chip"><span className="avatar">{(user.email ?? 'A')[0].toUpperCase()}</span><span>{user.email}</span></div></header>
-    {active === 'Shipments' ? <section className="content-section"><div className="section-heading"><div><span className="eyebrow">Fulfilment</span><h3>Shipments</h3><p className="muted">Monitor delivery and resend QR emails when needed.</p></div></div><ShipmentTable shipments={shipments.data ?? []} loading={shipments.isLoading} error={shipments.error as Error | null} /></section> : active === 'Orders' ? <section className="content-section"><div className="section-heading"><div><span className="eyebrow">Commerce</span><h3>Orders</h3><p className="muted">Payment and fulfilment activity across Cherry.</p></div></div><EntityTable type="orders" data={orders.data ?? []} loading={orders.isLoading} error={orders.error as Error | null} /></section> : active === 'Users' ? <section className="content-section"><div className="section-heading"><div><span className="eyebrow">Community</span><h3>Users</h3><p className="muted">Registered Cherry accounts.</p></div></div><EntityTable type="users" data={users.data ?? []} loading={users.isLoading} error={users.error as Error | null} /></section> : active !== 'Overview' ? <EmptySection title={active} /> : <>
-      <section className="summary-grid"><Summary label="Needs attention" value={(shipments.data ?? []).filter((shipment) => shipment.qrStatus === 'missing').length} tone="warning" /><Summary label="Shipments" value={shipments.data?.length ?? '—'} /><Summary label="Orders" value={orders.data?.length ?? '—'} /><Summary label="System status" value="Healthy" tone="good" /></section>
+    {active === 'Shipments' ? <section className="content-section"><div className="section-heading"><div><span className="eyebrow">Fulfilment</span><h3>Shipments</h3><p className="muted">Monitor delivery and resend QR emails when needed.</p></div></div><ShipmentTable shipments={shipments.data ?? []} loading={shipments.isLoading} error={shipments.error as Error | null} /></section> : active === 'Orders' ? <section className="content-section"><div className="section-heading"><div><span className="eyebrow">Commerce</span><h3>Orders</h3><p className="muted">Payment and fulfilment activity across Cherry.</p></div></div><EntityTable type="orders" data={orders.data ?? []} loading={orders.isLoading} error={orders.error as Error | null} /></section> : active === 'Products' ? <section className="content-section"><div className="section-heading"><div><span className="eyebrow">Catalogue</span><h3>Products</h3><p className="muted">Listings, sellers, donation targets, and sale status.</p></div></div><ProductTable products={products.data ?? []} loading={products.isLoading} error={products.error as Error | null} /></section> : active === 'Users' ? <section className="content-section"><div className="section-heading"><div><span className="eyebrow">Community</span><h3>Users</h3><p className="muted">Registered Cherry accounts.</p></div></div><EntityTable type="users" data={users.data ?? []} loading={users.isLoading} error={users.error as Error | null} /></section> : active !== 'Overview' ? <EmptySection title={active} /> : <>
+      <section className="summary-grid"><Summary label="Products" value={products.data?.length ?? '—'} /><Summary label="Shipments" value={shipments.data?.length ?? '—'} /><Summary label="Orders" value={orders.data?.length ?? '—'} /><Summary label="Users" value={users.data?.length ?? '—'} /></section>
       <section className="content-section"><div className="section-heading"><div><span className="eyebrow">Fulfilment</span><h3>Shipments needing attention</h3><p className="muted">Open the Shipments section to review and resend QR emails.</p></div><button className="icon-button" title="Refresh" onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-shipments'] })}><RefreshCw size={17} /></button></div><ShipmentTable shipments={(shipments.data ?? []).filter((shipment) => shipment.qrStatus === 'missing')} loading={shipments.isLoading} error={shipments.error as Error | null} /></section></>}
   </main></div>;
 }
 
 function Summary({ label, value, tone }: { label: string; value: string | number; tone?: string }) { return <div className="summary-card"><span className="muted">{label}</span><strong className={tone}>{value}</strong></div>; }
+
+function ProductTable({ products, loading, error }: { products: AdminProduct[]; loading: boolean; error: Error | null }) {
+  const columns: ColumnDef<AdminProduct>[] = [
+    { header: 'Product', cell: ({ row }) => <><span>{row.original.name}</span><span className="subtle">{row.original.id.slice(0, 12)}…</span></> },
+    { header: 'Seller', cell: ({ row }) => <span className="mono">{row.original.sellerId.slice(0, 12)}…</span> },
+    { header: 'Price', cell: ({ row }) => `GBP ${row.original.price.toFixed(2)}` },
+    { header: 'Donation', cell: ({ row }) => `GBP ${row.original.donation.toFixed(2)}` },
+    { header: 'Status', cell: ({ row }) => row.original.status },
+    { header: 'Sales', cell: ({ row }) => row.original.hasSales ? 'Sold' : 'Available' },
+    { header: 'Updated', cell: ({ row }) => row.original.updatedAt ? new Date(row.original.updatedAt).toLocaleDateString() : '—' },
+  ];
+  const table = useReactTable({ data: products, columns, initialState: { pagination: { pageSize: 10 } }, getCoreRowModel: getCoreRowModel(), getPaginationRowModel: getPaginationRowModel() });
+  if (loading) return <div className="empty-state">Loading products…</div>;
+  if (error) return <div className="empty-state error-state"><AlertCircle size={20} />{error.message}</div>;
+  return <><div className="table-wrap"><table><thead>{table.getHeaderGroups().map((group) => <tr key={group.id}>{group.headers.map((header) => <th key={header.id}>{flexRender(header.column.columnDef.header, header.getContext())}</th>)}</tr>)}</thead><tbody>{table.getRowModel().rows.map((row) => <tr key={row.id}>{row.getVisibleCells().map((cell) => <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>)}</tr>)}</tbody></table></div><div className="pagination"><span>Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}</span><div><button title="Previous page" disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()}><ChevronLeft size={16} /></button><button title="Next page" disabled={!table.getCanNextPage()} onClick={() => table.nextPage()}><ChevronRight size={16} /></button></div></div></>;
+}
 
 function EntityTable({ type, data, loading, error }: { type: 'orders' | 'users'; data: AdminOrder[] | AdminUser[]; loading: boolean; error: Error | null }) {
   const columns: ColumnDef<AdminOrder | AdminUser>[] = type === 'orders' ? [
