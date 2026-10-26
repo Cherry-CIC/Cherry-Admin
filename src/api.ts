@@ -2,18 +2,6 @@ import { auth } from './firebase';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api';
 
-export interface ShippingEmailIssue {
-  orderId: string;
-  productName: string | null;
-  sellerId: string | null;
-  sellerEmailStatus: string | null;
-  labelAttachmentStatus: string;
-  labelAttachmentError: string | null;
-  lastSellerEmailAttemptAt: string | null;
-  shipmentId: string | null;
-  trackingNumber: string | null;
-}
-
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = await auth.currentUser?.getIdToken();
   if (!token) throw new Error('You are not signed in');
@@ -33,7 +21,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const resendSellerEmail = (orderId: string) =>
-  request(`/admin/shipping-email-issues/${orderId}/resend`, { method: 'POST' });
+  request<{ sent: boolean; labelAttachmentStatus: string }>(`/admin/shipping-email-issues/${orderId}/resend`, { method: 'POST' });
 
 export interface AdminOrder {
   id: string;
@@ -75,11 +63,26 @@ export interface AdminShipment {
   trackingNumber: string | null;
   status: string;
   qrStatus: string;
+  labelAttachmentStatus: string;
+  labelAttachmentError: string | null;
   labelUrl: string | null;
   updatedAt: string;
 }
 
-export const getAdminOrders = () => request<AdminOrder[]>('/admin/orders');
-export const getAdminUsers = () => request<AdminUser[]>('/admin/users');
-export const getAdminProducts = () => request<AdminProduct[]>('/admin/products');
-export const getAdminShipments = () => request<AdminShipment[]>('/admin/shipments');
+export interface AdminPage<T> {
+  items: T[];
+  hasMore: boolean;
+  nextCursor: string | null;
+  total: number;
+}
+
+const pageQuery = (cursor?: string, limit = 20) => {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (cursor) params.set('cursor', cursor);
+  return `?${params.toString()}`;
+};
+
+export const getAdminOrders = (cursor?: string) => request<AdminPage<AdminOrder>>(`/admin/orders${pageQuery(cursor)}`);
+export const getAdminUsers = (cursor?: string) => request<AdminPage<AdminUser>>(`/admin/users${pageQuery(cursor)}`);
+export const getAdminProducts = (cursor?: string) => request<AdminPage<AdminProduct>>(`/admin/products${pageQuery(cursor)}`);
+export const getAdminShipments = (cursor?: string, attention = false) => request<AdminPage<AdminShipment>>(`/admin/shipments${pageQuery(cursor)}${attention ? '&attention=true' : ''}`);
