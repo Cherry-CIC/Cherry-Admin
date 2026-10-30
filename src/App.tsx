@@ -167,7 +167,7 @@ function EntityTable({ type, data, loading, error, page }: { type: 'orders' | 'u
     { header: 'Product', cell: ({ row }) => (row.original as AdminOrder).productName },
     { header: 'Amount', cell: ({ row }) => { const order = row.original as AdminOrder; return `${order.currency} ${(order.amount / 100).toFixed(2)}`; } },
     { header: 'Payment', cell: ({ row }) => <span className="status pending"><span />{(row.original as AdminOrder).paymentStatus}</span> },
-    { header: 'Shipment', cell: ({ row }) => (row.original as AdminOrder).shipmentStatus },
+    { header: 'Shipment', cell: ({ row }) => { const order = row.original as AdminOrder; return <><span>{order.shipmentStatus}</span><span className="subtle">Sendcloud: {order.sendcloudStatusMessage ?? '—'}</span></>; } },
     { header: 'Created', cell: ({ row }) => new Date((row.original as AdminOrder).createdAt).toLocaleDateString() },
   ] : [
     { header: 'User', cell: ({ row }) => <span className="mono">{(row.original as AdminUser).id.slice(0, 12)}…</span> },

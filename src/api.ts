@@ -33,6 +33,7 @@ export interface AdminOrder {
   paymentStatus: string;
   status: string;
   shipmentStatus: string;
+  sendcloudStatusMessage: string | null;
   createdAt: string;
 }
 
