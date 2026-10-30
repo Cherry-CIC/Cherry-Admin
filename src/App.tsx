@@ -191,6 +191,7 @@ function ShipmentTable({ shipments, loading, error, page }: { shipments: AdminSh
     { header: 'Carrier', accessorKey: 'carrier', cell: ({ getValue }) => getValue<string>() ?? '—' },
     { header: 'Tracking', cell: ({ row }) => row.original.trackingNumber ?? '—' },
     { header: 'Status', cell: ({ row }) => <span className="status pending"><span />{row.original.status.replace('_', ' ')}</span> },
+    { header: 'Sendcloud Status', cell: ({ row }) => row.original.sendcloudStatusMessage ?? '—' },
     { header: 'QR', cell: ({ row }) => <span className={`status ${row.original.qrStatus === 'available' ? 'attached' : 'failed'}`}><span />{row.original.qrStatus}</span> },
     { header: 'Updated', cell: ({ row }) => new Date(row.original.updatedAt).toLocaleDateString() },
     { id: 'actions', header: '', cell: ({ row }) => row.original.qrStatus !== 'available' ? <button className="table-action" onClick={() => resend(row.original.orderId)} disabled={sending === row.original.orderId}>{sending === row.original.orderId ? 'Sending…' : 'Resend QR'}<ArrowUpRight size={15} /></button> : null },

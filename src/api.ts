@@ -63,6 +63,7 @@ export interface AdminShipment {
   carrier: string | null;
   trackingNumber: string | null;
   status: string;
+  sendcloudStatusMessage: string | null;
   qrStatus: string;
   labelAttachmentStatus: string;
   labelAttachmentError: string | null;
